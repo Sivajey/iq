@@ -1,19 +1,15 @@
-FROM jpetazzo/dind
+ARG GO_VERSION=1.11.5
 
-# Install Docker from Docker Inc. repositories.
-RUN curl -sSL https://get.docker.com/ | sh && \
-    apt-get update && \
-    apt-get upgrade -y && \
-    apt-get install -y docker-engine && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+FROM golang:${GO_VERSION}
 
-RUN curl -s -L https://github.com/docker/compose/releases/latest | \
-    egrep -o '/docker/compose/releases/download/[0-9.]*/docker-compose-Linux-x86_64' | \
-    wget --base=http://github.com/ -i - -O /usr/local/bin/docker-compose && \
-    chmod +x /usr/local/bin/docker-compose && \
-    /usr/local/bin/docker-compose --version
+ARG GLIDE_VERSION=0.12.3
+ARG DEP_VERSION=0.5.0
 
-ENV LOG=file
-ENTRYPOINT ["wrapdocker"]
-CMD []
+RUN mkdir -p /opt/glide \
+ && wget -nv https://github.com/Masterminds/glide/releases/download/v$GLIDE_VERSION/glide-v$GLIDE_VERSION-linux-amd64.tar.gz -O- | \
+    tar xzf - -C /opt/glide --strip-components=1 \
+ && mv /opt/glide/glide /usr/local/bin/ \
+ && go get github.com/sparrc/gdm \
+ && go get github.com/2tvenom/go-test-teamcity \
+ && wget -nv https://github.com/golang/dep/releases/download/v$DEP_VERSION/dep-linux-amd64 -O /usr/local/bin/dep \
+ && chmod +x /usr/local/bin/dep
